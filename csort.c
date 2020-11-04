@@ -7,6 +7,9 @@
 /* strtol */
 #include <stdio.h>
 
+/* OMP */
+#include <omp.h> 
+
 static int
 csort(unsigned const k,
       unsigned const n,
@@ -17,23 +20,32 @@ csort(unsigned const k,
   if (NULL == count) {
     return -1;
   }
-
+#pragma omp parallel num_threads(4)
+{
+printf("Thread %d is executing \n", omp_get_thread_num());
+#pragma omp for  
   for (unsigned i = 0; i < n; i++) {
+#pragma omp atomic
     count[in[i]]++;
   }
-
-  unsigned total = 0;
+}
+  unsigned total = 0; 
   for (unsigned i = 0; i <= k; i++) {
     unsigned const counti = count[i];
     count[i] = total;
     total += counti;
   }
-
+#pragma omp parallel num_threads(4)
+{
+#pragma omp for
   for (unsigned i = 0; i < n; i++) {
+#pragma omp critical
+{
     out[count[in[i]]] = in[i];
     count[in[i]]++;
+}
   }
-
+}
   free(count);
 
   return 0;
